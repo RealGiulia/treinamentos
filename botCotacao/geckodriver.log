@@ -1,0 +1,9 @@
+1730300651598	geckodriver	INFO	Listening on 127.0.0.1:64879
+1730300654716	mozrunner::runner	INFO	Running command: "C:\\Program Files\\Mozilla Firefox\\firefox.exe" "--marionette" "-no-remote" "-profile" "C:\\Users\\giuli\\AppData\\Local\\Temp\\rust_mozprofileu8bZ2r"
+console.warn: services.settings: Ignoring preference override of remote settings server
+console.warn: services.settings: Allow by setting MOZ_REMOTE_SETTINGS_DEVTOOLS=1 in the environment
+1730300655294	Marionette	INFO	Marionette enabled
+Dynamically enable window occlusion 0
+1730300655693	Marionette	INFO	Listening on port 64893
+Read port: 64893
+1730300655845	RemoteAgent	WARN	TLS certificate errors will be ignored for this session
