@@ -49,6 +49,8 @@ def main():
 
     ia = GPT()
 
+    usr = "<put your SF user here>"
+    pwd = "<Put your password here>"
     # Configure whether or not to run on headless mode
     bot.headless = False
 
@@ -64,11 +66,11 @@ def main():
     # Implement here your logic...
     login =  bot.find_element("#username", By.CSS_SELECTOR)
     login.click()
-    bot.paste("giulia@intelliauto.adm")
+    bot.paste(usr)
 
     pwd = bot.find_element("#password", By.CSS_SELECTOR)
     pwd.click()
-    bot.paste("Bl@cksumm3r")
+    bot.paste(pwd)
 
     print("Login Done!")
     # Wait 3 seconds before closing
@@ -88,7 +90,8 @@ def main():
         'Sales and Marketing',
         'Customer Support and Service'
     ]
-
+    
+    cases_error = []
     
 
     table = bot.find_element(".slds-table > tbody:nth-child(3)", By.CSS_SELECTOR)
@@ -112,15 +115,55 @@ def main():
         response = ia.get_gpt_answer(complete_statement)
         print(response["message"])
 
-        
-        pattern = r'\*\*(.*?)\*\*'
+        if response["status"] == "OK":
 
-        matches = re.findall(pattern, response["message"])
-        print(matches)
+            new_item = DataPoolEntry(
+            values={
+                "case": number,
+                "requestor": name,
+                "date": date,
+                "business_unit": response["message"],
+                "description": matter
+                }
+            )
 
-        #TODO: Integrar com Datapool
-        
-                
+            # Getting the Datapool reference
+            datapool = maestro.get_datapool(label="sf-cases-teste")
+
+            # Adding a new item
+            datapool.create_entry(new_item)
+        else:
+            cases_error.append(number)
+            error =  f"Error with case {number}. Exception was ->> {response["message"]}"
+            maestro.error(task_id=execution.task_id, exception=error)
+
+
+        # Insert log information
+        maestro.new_log_entry(
+        activity_label="sf-cases-status",
+        values={
+            "case": case,
+            "status": response["status"],
+            "priority": priority
+            }
+        )
+
+        if len(cases_error) > 0:
+            emails = ["your_email@your_provider.com"]
+            # List of usernames, if not using, pass an empty list
+            users = []
+
+            subject = "Processing occured with errors"
+            body = f"the following cases could not be processed : {cases_error}. Please, verify the erros in the log session"
+
+            maestro.message(emails, users, subject, body, MessageType.TEXT)
+        else:
+            maestro.alert(
+            task_id=execution.task_id,
+            title="Info Alert",
+            message="SUCCESS >> Salesforce Automation has finished without errors",
+            alert_type=AlertType.INFO
+        )    
 
     # Finish and clean up the Web Browser
     # You MUST invoke the stop_browser to avoid
@@ -128,11 +171,11 @@ def main():
     bot.stop_browser()
 
     # Uncomment to mark this task as finished on BotMaestro
-    # maestro.finish_task(
-    #     task_id=execution.task_id,
-    #     status=AutomationTaskFinishStatus.SUCCESS,
-    #     message="Task Finished OK."
-    # )
+    maestro.finish_task(
+        task_id=execution.task_id,
+        status=AutomationTaskFinishStatus.SUCCESS,
+        message="Task Finished OK."
+    )
 
 
 def not_found(label):
