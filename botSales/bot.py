@@ -29,6 +29,8 @@ from webdriver_manager.firefox import GeckoDriverManager
 # Import for integration with BotCity Maestro SDK
 from botcity.maestro import *
 
+from gpt_integrator import GPT
+import re
 # Disable errors if we are not connected to Maestro
 BotMaestroSDK.RAISE_NOT_CONNECTED = False
 
@@ -45,6 +47,8 @@ def main():
 
     bot = WebBot()
 
+    ia = GPT()
+
     # Configure whether or not to run on headless mode
     bot.headless = False
 
@@ -56,7 +60,7 @@ def main():
 
     # Opens the BotCity website.
     bot.browse("https://intelliauto-dev-ed.develop.lightning.force.com/lightning/o/Case/list?filterName=00Baj00000IIjAuEAL")
-    breakpoint()
+    
     # Implement here your logic...
     login =  bot.find_element("#username", By.CSS_SELECTOR)
     login.click()
@@ -73,23 +77,50 @@ def main():
     login_btn = bot.find_element("#Login", By.CSS_SELECTOR)
     login_btn.click()
 
-    bot.wait(3000)
+    bot.wait(8000)
+
+    # List of business units
+    business_units = [
+        'Engineering and Design',
+        'Project Management',
+        'Manufacturing and Production',
+        'Software Development',
+        'Sales and Marketing',
+        'Customer Support and Service'
+    ]
+
+    
 
     table = bot.find_element(".slds-table > tbody:nth-child(3)", By.CSS_SELECTOR)
     cases = table.find_elements_by_tag_name("tr")
     for case in cases:
         number = case.find_element_by_tag_name("th").text
-        infos = case.find_element_by_tag_name("td")
+        infos = case.find_elements_by_tag_name("td")
         name = infos[2].text
         matter = infos[3].text
         date =infos[6].text
         priority = infos[5].text
 
+        statement = """Based on the matter of this issue tha my client has reported, tell me, shortly and directly, the 
+                     Business unit of my company is responsible for that one? """
+        title = f"the matter is {matter};"
 
+        business_info = f"The Business Units available are: {business_units};"
 
+        complete_statement =  statement + title + business_info
 
+        response = ia.get_gpt_answer(complete_statement)
+        print(response["message"])
 
+        
+        pattern = r'\*\*(.*?)\*\*'
 
+        matches = re.findall(pattern, response["message"])
+        print(matches)
+
+        #TODO: Integrar com Datapool
+        
+                
 
     # Finish and clean up the Web Browser
     # You MUST invoke the stop_browser to avoid
